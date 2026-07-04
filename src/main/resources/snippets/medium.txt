@@ -1,0 +1,10 @@
+computer
+keyboard
+internet
+variable
+function
+terminal
+compiler
+software
+database
+network

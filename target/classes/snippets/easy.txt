@@ -1,0 +1,10 @@
+cat
+dog
+sun
+hat
+tree
+book
+apple
+home
+milk
+water

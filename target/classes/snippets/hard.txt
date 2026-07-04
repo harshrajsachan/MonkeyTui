@@ -1,0 +1,8 @@
+synchronization
+polymorphism
+multithreading
+cryptography
+microarchitecture
+virtualization
+encapsulation
+asynchronous
