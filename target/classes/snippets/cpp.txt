@@ -1,9 +1,0 @@
-std::vector<int> nums;
-
-for(int i = 0; i < n; i++)
-
-cout << "Hello World" << endl;
-
-class Solution {
-
-int main() {
