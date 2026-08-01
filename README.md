@@ -23,19 +23,6 @@ A terminal-based typing practice application inspired by **Monkeytype**. Built i
 
 ---
 
-## Preview
-
-*(Add screenshots or GIFs here)*
-
-```
-WPM: 82
-Accuracy: 98%
-
-The quick brown fox jumps over the lazy dog...
-```
-
----
-
 ## Project Structure
 
 ```
