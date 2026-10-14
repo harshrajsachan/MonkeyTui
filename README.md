@@ -23,31 +23,11 @@ A terminal-based typing practice application inspired by **Monkeytype**. Built i
 
 ---
 
-## Project Structure
-
-```
-src
-├── main
-│   ├── java
-│   │   ├── game
-│   │   ├── tui
-│   │   ├── lang
-│   │   └── Main.java
-│   └── resources
-│       └── snippets
-│           ├── easy.txt
-│           ├── medium.txt
-│           ├── hard.txt
-│           ├── cpp.txt
-│           └── java.txt
-```
-
----
-
 ## Requirements
 
-- Java 21 (or newer)
-- Maven 3.9+
+- Java JDK 17 or newer
+- Apache Maven
+- A terminal that supports ANSI colors
 
 ---
 
@@ -56,7 +36,7 @@ src
 Clone the repository:
 
 ```bash
-git clone git@github.com:harshrajsachan/MonkeyTui.git
+git clone http://github.com/harshrajsachan/MonkeyTui.git
 cd MonkeyTui
 ```
 
@@ -84,16 +64,6 @@ java -jar target/MonkeyTui.jar
 
 ---
 
-## Controls
-
-| Key | Action |
-|------|--------|
-| Start Typing | Begin the test |
-| ESC | Exit |
-| ENTER | Restart (if implemented) |
-
----
-
 ## Metrics
 
 MonkeyTUI tracks:
@@ -102,28 +72,6 @@ MonkeyTUI tracks:
 - Typing Accuracy
 - Characters Typed
 - Errors
-
----
-
-## Technologies Used
-
-- Java
-- Maven
-- Lanterna
-- ANSI Terminal
-
----
-
-## Future Improvements
-
-- [ ] Themes
-- [ ] Custom text generation
-- [ ] Time-based mode
-- [ ] Quote mode
-- [ ] Leaderboard
-- [ ] Typing history
-- [ ] Configuration file
-- [ ] Vim keybindings
 
 ---
 
