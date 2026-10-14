@@ -9,20 +9,6 @@ A terminal-based typing practice application inspired by **Monkeytype**. Built i
 
 ---
 
-## ✨ Features
-
-- 🚀 Terminal-first typing experience
-- 📈 Real-time WPM calculation
-- 🎯 Live accuracy tracking
-- 📝 Multiple typing difficulty levels
-- 💻 Programming language snippets
-  - C++
-  - Java
-- 🎨 Clean Text User Interface (TUI)
-- ⚡ Lightweight and fast
-
----
-
 ## Requirements
 
 - Java JDK 17 or newer
