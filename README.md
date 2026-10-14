@@ -83,7 +83,7 @@ MonkeyTUI is inspired by the excellent typing website **Monkeytype**, reimagined
 
 ## License
 
-This project is licensed under the MIT License.
+MonkeyTUI is licensed under the [MIT License](LICENSE).
 
 ---
 
