@@ -7,105 +7,37 @@ import com.googlecode.lanterna.screen.Screen;
 import com.proto.game.GameState;
 import com.proto.game.TypingEngine;
 
-public class GameScreen {
+/** Simple alternate screen retained for the GameState-based implementation. */
+public final class GameScreen {
+    private final GameState state = new GameState();
+    private final TypingEngine engine = new TypingEngine(state);
+    private final Renderer renderer = new Renderer();
 
-  private final GameState state;
+    public void run(Screen screen) throws Exception {
+        while (true) {
+            screen.clear();
+            TextGraphics graphics = screen.newTextGraphics();
+            renderer.render(graphics, state);
+            screen.refresh();
 
-  private final TypingEngine engine;
+            KeyStroke key = screen.readInput();
+            if (key == null) continue;
+            KeyType type = key.getKeyType();
+            Character ch = type == KeyType.Character ? key.getCharacter() : null;
 
-  private final Renderer renderer;
-
-  public GameScreen() {
-
-    state = new GameState();
-
-    engine = new TypingEngine(state);
-
-    renderer = new Renderer();
-  }
-
-  public void run(Screen screen) throws Exception {
-
-    while (true) {
-
-      screen.clear();
-
-      TextGraphics tg = screen.newTextGraphics();
-
-      renderer.render(tg, state);
-
-      screen.refresh();
-
-      KeyStroke keyStroke = screen.readInput();
-
-      /*
-       * CTRL + C → EXIT APP
-       */
-
-      if (keyStroke.isCtrlDown()
-          && keyStroke.getKeyType() == KeyType.Character
-          && keyStroke.getCharacter() == 'c') {
-
-        break;
-      }
-
-      /*
-       * ESC → RESET CURRENT MODE
-       */
-
-      if (keyStroke.getKeyType() == KeyType.Escape) {
-
-        state.loadMode(state.getCurrentMode());
-
-        continue;
-      }
-
-      /*
-       * CHARACTER INPUT
-       */
-
-      if (keyStroke.getKeyType() == KeyType.Character) {
-
-        char typedChar = keyStroke.getCharacter();
-
-        /*
-         * MODE SWITCHING
-         */
-
-        if (typedChar == '1') {
-
-          state.loadMode("easy.txt");
-
-          continue;
+            if (key.isCtrlDown() && ch != null
+                    && Character.toLowerCase(ch) == 'q') break;
+            if (type == KeyType.Escape) {
+                state.loadMode(state.getCurrentMode());
+                continue;
+            }
+            if (type == KeyType.F1) state.loadMode("easy.txt");
+            else if (type == KeyType.F2) state.loadMode("medium.txt");
+            else if (type == KeyType.F3) state.loadMode("hard.txt");
+            else if (type == KeyType.F4) state.loadMode("java.txt");
+            else if (type == KeyType.Character && ch != null && !key.isCtrlDown() && !key.isAltDown()) {
+                engine.handleInput(ch);
+            }
         }
-
-        if (typedChar == '2') {
-
-          state.loadMode("medium.txt");
-
-          continue;
-        }
-
-        if (typedChar == '3') {
-
-          state.loadMode("hard.txt");
-
-          continue;
-        }
-
-        if (typedChar == '4') {
-
-          state.loadMode("java.txt");
-
-          continue;
-        }
-
-        /*
-         * NORMAL TYPING
-         */
-
-        engine.handleInput(typedChar);
-      }
     }
-  }
 }
