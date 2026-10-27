@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Keyboard-first terminal typing test. Screen changes are event-driven;
  * Lanterna's double buffer handles changed-cell rendering.
- */
+*/
 public final class Main {
     private static final TextColor BG = new TextColor.RGB(0, 0, 0);
     private static final TextColor MUTED = new TextColor.RGB(92, 92, 92);
