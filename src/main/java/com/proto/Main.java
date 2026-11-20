@@ -19,10 +19,9 @@ import java.util.Base64;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Keyboard-first terminal typing test. Screen changes are event-driven;
- * Lanterna's double buffer handles changed-cell rendering.
-*/
+ // Keyboard-first terminal typing test. Screen changes are event-driven;
+ // Lanterna's double buffer handles changed-cell rendering.
+
 public final class Main {
     private static final TextColor BG = new TextColor.RGB(0, 0, 0);
     private static final TextColor MUTED = new TextColor.RGB(92, 92, 92);
@@ -55,7 +54,6 @@ public final class Main {
                 double previousWpm = 0.0;
                 boolean resultCaptured = false;
                 List<RunRecord> history = loadHistory();
-                int historyIndex = 0;
 
                 draw(screen, session, mode, panel, panelIndex, difficultyIndex, durationIndex, previousWpm);
                 dirty = false;
@@ -80,7 +78,6 @@ public final class Main {
                                 && (panel == Panel.NONE || panel == Panel.RESULTS)) {
                             panel = Panel.HISTORY;
                             history = loadHistory();
-                            historyIndex = 0;
                             panelIndex = 0;
                             dirty = true;
                             continue;
@@ -121,7 +118,6 @@ public final class Main {
                                     dirty = true;
                                 } else if (ctrl && ch != null && (ch == 'h' || ch == 'H')) {
                                     panel = Panel.HISTORY;
-                                    historyIndex = 0;
                                     panelIndex = 0;
                                     dirty = true;
                                 }
@@ -198,7 +194,7 @@ public final class Main {
                             if (isCodeMode(mode)) mode = "easy.txt";
                             else mode = "java.txt";
                             session = new TypingSession(loader, mode);
-                                        session.setDurationSeconds(DURATIONS[durationIndex]);
+                            session.setDurationSeconds(DURATIONS[durationIndex]);
                             difficultyIndex = difficultyIndex(mode);
                             dirty = true;
                         } else if (ctrl && ch != null && (ch == 'l' || ch == 'L')) {
@@ -208,10 +204,6 @@ public final class Main {
                         } else if (ctrl && ch != null && (ch == 'o' || ch == 'O')) {
                             panel = Panel.LESSON;
                             panelIndex = mode.equals("cpp.txt") ? 1 : 0;
-                            dirty = true;
-                        } else if (ctrl && ch != null && (ch == 't' || ch == 'T')) {
-                            panel = Panel.TIME;
-                            panelIndex = durationIndex;
                             dirty = true;
                         } else if (type == KeyType.Character && ch != null && ch == '?') {
                             panel = Panel.HELP;
@@ -603,7 +595,7 @@ public final class Main {
         g.putString(x, y, text.substring(0, Math.min(text.length(), width - x)));
     }
 
-    /** Wrap text without dropping source characters, preserving cursor offsets. */
+     // Wrap text without dropping source characters, preserving cursor offsets. 
     private static List<Line> wrapPreservingPositions(String text, int width) {
         List<Line> lines = new ArrayList<>();
         int start = 0;

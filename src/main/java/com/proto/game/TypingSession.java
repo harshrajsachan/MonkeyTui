@@ -16,7 +16,7 @@ public final class TypingSession {
     private long startedAtNanos;
     private long finishedAtNanos;
     private int totalMistakes;
-    private int durationSeconds = 300; // default to five minutes; no unlimited mode
+    private int durationSeconds = 300;  //default to five minutes; no unlimited mode
 
     public TypingSession(SnippetLoader loader, String mode) {
         this.loader = loader;
