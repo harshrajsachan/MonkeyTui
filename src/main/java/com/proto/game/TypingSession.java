@@ -74,6 +74,7 @@ public final class TypingSession {
 
     public String text() { return text; }
     public int position() { return input.length(); }
+    public char typedCharAt(int position) { return input.charAt(position); }
     public boolean isStarted() { return startedAtNanos != 0; }
     public boolean isComplete() {
         if (input.length() >= text.length()) {

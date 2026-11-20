@@ -1,13 +1,19 @@
 package com.proto;
 
+import com.googlecode.lanterna.SGR;
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.graphics.TextGraphics;
+import com.googlecode.lanterna.input.BasicCharacterPattern;
+import com.googlecode.lanterna.input.CharacterPattern;
+import com.googlecode.lanterna.input.InputDecoder;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
+import com.googlecode.lanterna.terminal.Terminal;
+import com.googlecode.lanterna.terminal.ansi.StreamBasedTerminal;
 import com.proto.game.TypingSession;
 import com.proto.lang.SnippetLoader;
 
@@ -38,6 +44,7 @@ public final class Main {
         String mode = normalizeMode(args.length > 0 ? args[0] : "easy.txt");
         try {
             var terminal = new DefaultTerminalFactory().createTerminal();
+            enableCtrlHShortcut(terminal);
             try (Screen screen = new TerminalScreen(terminal)) {
                 screen.startScreen();
                 screen.setCursorPosition(null);
@@ -83,6 +90,17 @@ public final class Main {
                             continue;
                         }
 
+                        // Retake the current passage with the exact same settings,
+                        // whether the test is still running or already finished.
+                        if (ctrl && ch != null && (ch == 'r' || ch == 'R')
+                                && (panel == Panel.NONE || panel == Panel.RESULTS)) {
+                            session.restartSameText();
+                            panel = Panel.NONE;
+                            resultCaptured = false;
+                            dirty = true;
+                            continue;
+                        }
+
                         if (panel != Panel.NONE) {
                             if (type == KeyType.Escape) {
                                 if (panel == Panel.RESULTS) {
@@ -106,18 +124,9 @@ public final class Main {
                                 panelIndex = Math.min(panelSize(panel) - 1, panelIndex + 1);
                                 dirty = true;
                             } else if (panel == Panel.RESULTS) {
-                                // Results stay visible unless explicitly retaking or reviewing errors.
+                                // Results stay visible unless explicitly reviewing errors.
                                 if (ch != null && !ctrl && (ch == 'e' || ch == 'E')) {
                                     panel = Panel.ERRORS;
-                                    panelIndex = 0;
-                                    dirty = true;
-                                } else if (ctrl && ch != null && (ch == 'r' || ch == 'R')) {
-                                    session.restartSameText();
-                                    panel = Panel.NONE;
-                                    resultCaptured = false;
-                                    dirty = true;
-                                } else if (ctrl && ch != null && (ch == 'h' || ch == 'H')) {
-                                    panel = Panel.HISTORY;
                                     panelIndex = 0;
                                     dirty = true;
                                 }
@@ -129,11 +138,12 @@ public final class Main {
                                     session.setDurationSeconds(record.duration());
                                     session.restartWithText(record.text());
                                     durationIndex = durationIndexFor(record.duration());
+                                    difficultyIndex = difficultyIndex(mode);
                                     previousWpm = record.wpm();
                                     resultCaptured = false;
                                     panel = Panel.NONE;
                                 } else {
-                                    panel = Panel.RESULTS;
+                                    panel = Panel.NONE;
                                 }
                                 dirty = true;
                             } else if (type == KeyType.Enter || type == KeyType.Character && (ch == ' ')) {
@@ -232,6 +242,9 @@ public final class Main {
                         panel = Panel.RESULTS;
                         dirty = true;
                     }
+                    if (screen.doResizeIfNecessary() != null) {
+                        dirty = true;
+                    }
                     long displayedSecond = session.elapsedSeconds();
                     boolean statsTick = panel == Panel.NONE && session.isStarted()
                             && displayedSecond != lastDisplayedSecond;
@@ -250,6 +263,26 @@ public final class Main {
             System.err.println("MonkeyTui could not start: " + e.getMessage());
             System.err.println("Run it inside a real terminal, not an IDE output pane.");
         }
+    }
+
+    // Lanterna maps both Ctrl+H (0x08) and the usual Backspace byte (0x7F) to
+    // KeyType.Backspace, so the history shortcut never reaches the event loop.
+    // Drop only the 0x08 mapping and decode it as ctrl+h; Backspace keeps 0x7F.
+    private static void enableCtrlHShortcut(Terminal terminal) {
+        if (!(terminal instanceof StreamBasedTerminal streamTerminal)) {
+            return;
+        }
+        InputDecoder decoder = streamTerminal.getInputDecoder();
+        for (CharacterPattern pattern : new ArrayList<>(decoder.getPatterns())) {
+            if (pattern instanceof BasicCharacterPattern basic
+                    && basic.getResult().getKeyType() == KeyType.Backspace
+                    && basic.getPattern().length == 1
+                    && basic.getPattern()[0] == '\b') {
+                decoder.removePattern(pattern);
+            }
+        }
+        KeyStroke ctrlH = new KeyStroke(Character.valueOf('h'), true, false);
+        decoder.addProfile(() -> List.of(new BasicCharacterPattern(ctrlH, '\b')));
     }
 
     private static Path historyPath() {
@@ -341,6 +374,7 @@ public final class Main {
     private static void draw(Screen screen, TypingSession session, String mode, Panel panel,
                              int panelIndex, int difficultyIndex, int durationIndex,
                              double previousWpm) throws IOException {
+        screen.doResizeIfNecessary();
         TerminalSize size = screen.getTerminalSize();
         int width = size.getColumns();
         int height = size.getRows();
@@ -367,69 +401,62 @@ public final class Main {
 
             String text = session.text();
             // Keep the typing block compact like Toofan: fewer words and more breathing room.
-            int textWidth = Math.max(20, Math.min(68, width - 12));
+            int textWidth = Math.max(1, Math.min(68, width - 12));
             List<Line> lines = wrapPreservingPositions(text, textWidth);
             int cursor = session.position();
-            int cursorLine = 0;
-            int cursorCol = 0;
-            for (int i = 0; i < lines.size(); i++) {
-                Line line = lines.get(i);
-                int lineEnd = line.start + line.text.length();
-                boolean cursorAtNewline = cursor < text.length() && text.charAt(cursor) == '\n' && cursor == lineEnd;
-                if (cursorAtNewline || (cursor >= line.start &&
-                        (cursor < lineEnd || i == lines.size() - 1 || cursor == text.length()))) {
-                    cursorLine = i;
-                    cursorCol = cursor - line.start;
-                    break;
+            int[] cursorCell = layoutPosition(lines, text, cursor);
+            int cursorLine = cursorCell[0];
+            int cursorCol = cursorCell[1];
+
+            // Ghost caret: estimates where the previous run's average speed would be
+            // at this elapsed time, like Monkeytype's pace caret. It is drawn on the
+            // same row as the character it marks so it can never overwrite the line
+            // below.
+            int[] ghostCell = null;
+            if (previousWpm > 0 && session.isStarted() && !session.isComplete() && !text.isEmpty()) {
+                int ghostPosition = Math.min(text.length() - 1,
+                        Math.max(0, (int) Math.floor(session.elapsedSeconds() * previousWpm * 5.0 / 60.0)));
+                if (ghostPosition != cursor) {
+                    ghostCell = layoutPosition(lines, text, ghostPosition);
                 }
             }
 
             int visible = Math.max(1, Math.min(3, height - 12));
             int firstLine = Math.max(0, Math.min(cursorLine - 1, lines.size() - visible));
             int y0 = Math.max(statsY + 2, height / 2 - 1);
-            int startX = Math.max(2, (width - textWidth) / 2);
+            int startX = Math.max(1, (width - textWidth) / 2);
             for (int li = firstLine; li < Math.min(lines.size(), firstLine + visible); li++) {
                 Line line = lines.get(li);
                 int y = y0 + li - firstLine;
                 for (int j = 0; j < line.text.length() && startX + j < width - 1; j++) {
                     int p = line.start + j;
+                    char current = p < cursor ? session.typedCharAt(p) : line.text.charAt(j);
                     TextColor color = p < cursor ? (session.isError(p) ? ERROR : FG) : MUTED;
                     g.setForegroundColor(color);
                     g.setBackgroundColor(BG);
-                    g.putString(startX + j, y, String.valueOf(line.text.charAt(j)));
+                    if (ghostCell != null && ghostCell[0] == li && ghostCell[1] == j) {
+                        g.putString(startX + j, y, String.valueOf(current), SGR.UNDERLINE);
+                    } else {
+                        g.putString(startX + j, y, String.valueOf(current));
+                    }
+                }
+                if (ghostCell != null && ghostCell[0] == li
+                        && ghostCell[1] == line.text.length()
+                        && startX + ghostCell[1] < width - 1) {
+                    g.setForegroundColor(new TextColor.RGB(150, 150, 150));
+                    g.setBackgroundColor(BG);
+                    g.putString(startX + ghostCell[1], y, "▁");
                 }
             }
 
             int cursorY = y0 + cursorLine - firstLine;
             int cursorX = startX + cursorCol;
             if (cursorY >= y0 && cursorY < y0 + visible && cursorX >= 0 && cursorX < width - 1) {
-                char current = cursor < text.length() ? text.charAt(cursor) : ' ';
+                char current = cursor < text.length() && text.charAt(cursor) != '\n'
+                        ? text.charAt(cursor) : ' ';
                 g.setBackgroundColor(FG);
                 g.setForegroundColor(BG);
                 g.putString(cursorX, cursorY, String.valueOf(current));
-            }
-
-            // Ghost caret: estimates where the previous run's average speed would be
-            // at this elapsed time, like Monkeytype's pace caret.
-            if (previousWpm > 0 && session.isStarted() && !session.isComplete()) {
-                int ghostPosition = Math.min(text.length() - 1,
-                        Math.max(0, (int) Math.floor(session.elapsedSeconds() * previousWpm * 5.0 / 60.0)));
-                for (int li = firstLine; li < Math.min(lines.size(), firstLine + visible); li++) {
-                    Line line = lines.get(li);
-                    if (ghostPosition >= line.start && ghostPosition < line.start + line.text.length()) {
-                        int gx = startX + ghostPosition - line.start;
-                        int gy = y0 + li - firstLine;
-                        // Underline caret is drawn on the row below the target glyph,
-                        // so it never overwrites the character being typed.
-                        int markerY = gy + 1;
-                        if (gx >= 0 && gx < width - 1 && markerY < height) {
-                            g.setBackgroundColor(BG);
-                            g.setForegroundColor(new TextColor.RGB(150, 150, 150));
-                            g.putString(gx, markerY, "▁");
-                        }
-                        break;
-                    }
-                }
             }
 
             // Keep the idle screen minimal: help only. Once typing starts, replace
@@ -595,6 +622,30 @@ public final class Main {
         g.putString(x, y, text.substring(0, Math.min(text.length(), width - x)));
     }
 
+    // Maps a logical character offset to the visual row/column produced by
+    // wrapPreservingPositions. Newlines are consumed by entering, so a cursor
+    // sitting on one stays at the end of the current row.
+    private static int[] layoutPosition(List<Line> lines, String text, int position) {
+        int target = Math.max(0, Math.min(position, text.length()));
+        for (int i = 0; i < lines.size(); i++) {
+            Line line = lines.get(i);
+            int lineEnd = line.start + line.text.length();
+            if (target < line.start) break;
+            if (target < lineEnd) {
+                return new int[]{i, target - line.start};
+            }
+            if (target == lineEnd) {
+                boolean atNewline = target < text.length() && text.charAt(target) == '\n';
+                if (atNewline || i == lines.size() - 1) {
+                    return new int[]{i, line.text.length()};
+                }
+            }
+        }
+        Line last = lines.get(lines.size() - 1);
+        return new int[]{lines.size() - 1,
+                Math.max(0, Math.min(target - last.start, last.text.length()))};
+    }
+
      // Wrap text without dropping source characters, preserving cursor offsets. 
     private static List<Line> wrapPreservingPositions(String text, int width) {
         List<Line> lines = new ArrayList<>();
@@ -609,7 +660,7 @@ public final class Main {
             int newline = text.indexOf('\n', start);
             if (newline >= start && newline < end) end = newline;
             if (end < text.length() && end == start + width) {
-                int space = text.lastIndexOf(' ', end);
+                int space = text.lastIndexOf(' ', end - 1);
                 if (space > start + width / 2) end = space + 1;
             }
             if (end == start) end = Math.min(start + 1, text.length());
