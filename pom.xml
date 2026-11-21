@@ -10,9 +10,9 @@
     <version>0.1.0</version>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit.version>5.10.2</junit.version>
     </properties>
 
     <dependencies>
@@ -21,6 +21,13 @@
             <groupId>com.googlecode.lanterna</groupId>
             <artifactId>lanterna</artifactId>
             <version>3.1.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
@@ -34,9 +41,14 @@
                 <version>3.11.0</version>
 
                 <configuration>
-                    <source>17</source>
-                    <target>17</target>
+                    <release>17</release>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
             </plugin>
 
             <plugin>
@@ -52,21 +64,38 @@
                             <finalName>MonkeyTui</finalName>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.proto.Main</mainClass>
+                                    <mainClass>com.monkeytui.Main</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
 
                 <configuration>
-                    <mainClass>com.proto.Main</mainClass>
+                    <mainClass>com.monkeytui.Main</mainClass>
                 </configuration>
+
+                <executions>
+                    <execution>
+                        <id>coding-standards</id>
+                        <phase>validate</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <executable>python3</executable>
+                            <arguments>
+                                <argument>${project.basedir}/scripts/check_standards.py</argument>
+                                <argument>${project.basedir}/src/main/java</argument>
+                                <argument>${project.basedir}/src/test/java</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
