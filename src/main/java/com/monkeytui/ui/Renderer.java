@@ -185,7 +185,7 @@ public final class Renderer {
         int barWidth = Math.max(10, Math.min(layout.width() - 12, 90));
         int barX = Math.max(1, (layout.width() - barWidth) / 2);
         if (model.session().isStarted()) drawBar(g, model.session(), layout, barX, barY, barWidth);
-        else TextPainter.putCentered(g, layout.width(), Math.min(layout.height() - 1, barY + 1), "?  help", Theme.MUTED);
+        else { g.setBackgroundColor(Theme.BACKGROUND); TextPainter.putCentered(g, layout.width(), Math.min(layout.height() - 1, barY + 1), "?  help", Theme.MUTED); }
     }
 
     // Draws the timed progress bar cells.
