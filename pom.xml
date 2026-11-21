@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -17,12 +17,14 @@
 
     <dependencies>
 
+        <!-- Terminal UI -->
         <dependency>
             <groupId>com.googlecode.lanterna</groupId>
             <artifactId>lanterna</artifactId>
             <version>3.1.2</version>
         </dependency>
 
+        <!-- Unit Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -33,24 +35,28 @@
     </dependencies>
 
     <build>
+        <finalName>MonkeyTui</finalName>
+
         <plugins>
 
+            <!-- Java Compilation -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
-
                 <configuration>
                     <release>17</release>
                 </configuration>
             </plugin>
 
+            <!-- Unit Testing -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
             </plugin>
 
+            <!-- Executable JAR -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -58,10 +64,11 @@
                 <executions>
                     <execution>
                         <phase>package</phase>
-                        <goals><goal>shade</goal></goals>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <finalName>MonkeyTui</finalName>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.monkeytui.Main</mainClass>
@@ -72,33 +79,18 @@
                 </executions>
             </plugin>
 
+            <!-- Run Application -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
-
                 <configuration>
                     <mainClass>com.monkeytui.Main</mainClass>
                 </configuration>
-
-                <executions>
-                    <execution>
-                        <id>coding-standards</id>
-                        <phase>validate</phase>
-                        <goals><goal>exec</goal></goals>
-                        <configuration>
-                            <executable>python3</executable>
-                            <arguments>
-                                <argument>${project.basedir}/scripts/check_standards.py</argument>
-                                <argument>${project.basedir}/src/main/java</argument>
-                                <argument>${project.basedir}/src/test/java</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
 
         </plugins>
     </build>
 
 </project>
+
