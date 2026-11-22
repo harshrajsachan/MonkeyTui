@@ -1,0 +1,56 @@
+name: Build Windows ZIP
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  windows-zip:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Build MonkeyTUI
+        run: mvn --batch-mode clean package
+
+      - name: Prepare Windows package
+        run: |
+          mkdir -p dist/MonkeyTUI
+          cp target/MonkeyTui.jar dist/MonkeyTUI/MonkeyTui.jar
+
+          cat > dist/MonkeyTUI/MonkeyTUI.bat <<'EOF'
+          @echo off
+          title MonkeyTUI
+          java -jar "%~dp0MonkeyTui.jar"
+          if errorlevel 1 (
+              echo.
+              echo Could not start MonkeyTUI.
+              echo Please install Java 17 or newer.
+              pause
+          )
+          EOF
+
+      - name: Create ZIP
+        run: |
+          cd dist
+          zip -r MonkeyTUI-Windows.zip MonkeyTUI
+
+      - name: Upload to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "$GITHUB_REF_NAME" \
+            dist/MonkeyTUI-Windows.zip \
+            --clobber
