@@ -8,9 +8,10 @@ public enum ContentMode {
     MEDIUM("medium.txt", "medium", false),
     HARD("hard.txt", "hard", false),
     JAVA("java.txt", "Java", true),
+    CPP_WORD("cpp_word.txt", "CPP", false),
     CPP("cpp.txt", "C++", true);
 
-    public static final List<ContentMode> WORD_MODES = List.of(EASY, MEDIUM, HARD);
+    public static final List<ContentMode> WORD_MODES = List.of(EASY, MEDIUM, HARD , CPP_WORD);
     public static final List<ContentMode> CODE_MODES = List.of(JAVA, CPP);
 
     private final String fileName;
